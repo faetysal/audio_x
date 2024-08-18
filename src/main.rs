@@ -14,14 +14,17 @@ struct Args {
   dir: String
 }
 
-fn main() {
+fn main() -> std::io::Result<()> {
   let args = Args::parse();
   let dir = Path::new(&args.dir);
   let tracks = audio::get_tracks(dir).unwrap();
 
   let mut terminal = tui::init().unwrap();
-  let player_tui = PlayerTUI::new(tracks);
-  player_tui.run(&mut terminal);
 
-  // println!("Tracks: {:#?}", tracks);
+  let mut player_tui = PlayerTUI::new(tracks);
+  let app_result = player_tui.run(&mut terminal);
+
+  tui::restore()?;
+
+  app_result
 }

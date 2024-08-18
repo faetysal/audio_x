@@ -1,5 +1,5 @@
-use ratatui::{buffer::Buffer, layout::{Alignment, Constraint, Direction, Layout, Rect}, style::{Color, Style, Stylize}, text::{Line, Span, Text}, widgets::{block::Title, Block, Borders, Cell, Gauge, List, Padding, Paragraph, Row, ScrollbarState, StatefulWidget, Table, TableState, Widget}, Frame};
-
+use std::io::Result;
+use ratatui::{buffer::Buffer, crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind}, layout::{Alignment, Constraint, Direction, Layout, Rect}, style::{Color, Style, Stylize}, text::{Line, Span, Text}, widgets::{block::Title, Block, Borders, Cell, Gauge, List, Padding, Paragraph, Row, ScrollbarState, StatefulWidget, Table, TableState, Widget}, Frame};
 use crate::tui;
 
 use super::Track;
@@ -21,13 +21,13 @@ impl PlayerTUI {
     }
   }
 
-  pub fn run(&self, terminal: &mut tui::Tui) -> std::io::Result<()> {
+  pub fn run(&mut self, terminal: &mut tui::Tui) -> Result<()> {
     while !self.exit {
       terminal.draw(|frame| {
         self.render_frame(frame);
       })?;
 
-      self.handle_events();
+      self.handle_events()?;
     }
 
     Ok(())
@@ -37,8 +37,60 @@ impl PlayerTUI {
     frame.render_widget(self, frame.area());
   }
 
-  fn handle_events(&self) {
-    
+  pub fn next(&mut self) {
+    let i = match self.playlist_state.selected() {
+      Some(i) => {
+        if i >= self.playlist.len() - 1 {
+          0
+        } else {
+          i + 1
+        }
+      },
+      None => 0
+    };
+
+    self.playlist_state.select(Some(i));
+    self.playlist_scroll_state = self.playlist_scroll_state.position(i);
+  }
+
+  pub fn prev(&mut self) {
+    let i = match self.playlist_state.selected() {
+      Some(i) => {
+        if i == 0 {
+          self.playlist.len() - 1
+        } else {
+          i - 1
+        }
+      },
+      None => 0
+    };
+
+    self.playlist_state.select(Some(i));
+    self.playlist_scroll_state = self.playlist_scroll_state.position(i);
+  }
+
+  fn handle_events(&mut self) -> Result<()> {
+    match event::read()? {
+      Event::Key(key_event) if key_event.kind == KeyEventKind::Press => {
+        self.handle_key_event(key_event)
+      },
+      _ => {}
+    };
+
+    Ok(())
+  }
+
+  fn handle_key_event(&mut self, event: KeyEvent) {
+    match event.code {
+      KeyCode::Up => self.prev(),
+      KeyCode::Down => self.next(),
+      KeyCode::Char('q') | KeyCode::Char('Q') => self.exit(),
+      _ => {}
+    }
+  }
+
+  fn exit(&mut self) {
+    self.exit = true;
   }
 }
 
