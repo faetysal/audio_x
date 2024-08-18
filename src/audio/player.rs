@@ -1,7 +1,8 @@
 use std::{fs::File, io::BufReader, time::Duration};
 use rodio::{Decoder, OutputStream, Sink, Source};
+use crate::tui;
 
-use super::Track;
+use super::{player_tui, Track};
 
 pub fn init(tracks: Vec<Track>) {
   let (_stream, stream_handle) = OutputStream::try_default()

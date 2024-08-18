@@ -2,8 +2,9 @@ use std::path::Path;
 use clap::Parser;
 
 mod audio;
-use audio::player;
+mod tui;
 
+use audio::player_tui::PlayerTUI;
 
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
@@ -18,7 +19,9 @@ fn main() {
   let dir = Path::new(&args.dir);
   let tracks = audio::get_tracks(dir).unwrap();
 
-  player::init(tracks);
+  let mut terminal = tui::init().unwrap();
+  let player_tui = PlayerTUI::new(tracks);
+  player_tui.run(&mut terminal);
 
   // println!("Tracks: {:#?}", tracks);
 }
