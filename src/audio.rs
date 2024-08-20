@@ -9,7 +9,7 @@ use std::{
 use id3::{Tag, TagLike};
 
 pub mod player_tui;
-mod player;
+pub mod player;
 
 #[derive(Debug)]
 pub struct Track {

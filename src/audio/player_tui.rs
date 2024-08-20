@@ -2,12 +2,13 @@ use std::io::Result;
 use ratatui::{buffer::Buffer, crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind}, layout::{Alignment, Constraint, Direction, Layout, Rect}, style::{Color, Style, Stylize}, text::{Line, Span, Text}, widgets::{block::Title, Block, Borders, Cell, Gauge, List, Padding, Paragraph, Row, ScrollbarState, StatefulWidget, Table, TableState, Widget}, Frame};
 use crate::tui;
 
-use super::Track;
+use super::{player::Player, Track};
 
 pub struct PlayerTUI {
-  playlist: Vec<Track>,
+  pub playlist: Vec<Track>,
   playlist_state: TableState,
   playlist_scroll_state: ScrollbarState,
+  pub player: Player,
   exit: bool
 }
 
@@ -18,6 +19,7 @@ impl PlayerTUI {
       playlist_scroll_state: ScrollbarState::new(tracks.len() - 1),
       exit: false,
       playlist: tracks,
+      player: Player::init()
     }
   }
 
@@ -37,7 +39,7 @@ impl PlayerTUI {
     frame.render_widget(self, frame.area());
   }
 
-  pub fn next(&mut self) {
+  pub fn down(&mut self) {
     let i = match self.playlist_state.selected() {
       Some(i) => {
         if i >= self.playlist.len() - 1 {
@@ -53,7 +55,7 @@ impl PlayerTUI {
     self.playlist_scroll_state = self.playlist_scroll_state.position(i);
   }
 
-  pub fn prev(&mut self) {
+  pub fn up(&mut self) {
     let i = match self.playlist_state.selected() {
       Some(i) => {
         if i == 0 {
@@ -82,11 +84,28 @@ impl PlayerTUI {
 
   fn handle_key_event(&mut self, event: KeyEvent) {
     match event.code {
-      KeyCode::Up => self.prev(),
-      KeyCode::Down => self.next(),
+      KeyCode::Up => self.up(),
+      KeyCode::Down => self.down(),
+      KeyCode::Enter => self.play(),
       KeyCode::Char('q') | KeyCode::Char('Q') => self.exit(),
       _ => {}
     }
+  }
+
+  /*fn set_queue(&'a mut self, start_idx: usize) {
+    let playlist_count = self.playlist.len();
+    for i in 0..self.playlist.len() {
+      let idx = (playlist_count + i + start_idx) % playlist_count;
+      let track = self.playlist.get(idx).unwrap();
+      self.queue.push(track);
+    }
+
+    println!("Queue set");
+  }*/
+
+  pub fn play(&mut self) {
+    self.player.set_queue(&self.playlist, 0);
+    self.player.play();
   }
 
   fn exit(&mut self) {

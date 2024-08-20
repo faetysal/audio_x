@@ -27,4 +27,7 @@ fn main() -> std::io::Result<()> {
   tui::restore()?;
 
   app_result
+
+  /*player_tui.play();
+  Ok(())*/
 }
