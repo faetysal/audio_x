@@ -45,6 +45,10 @@ impl<'a> Player {
     self.sink.play();
   }
 
+  pub fn next(&self) {
+    self.sink.skip_one();
+  }
+
   fn a_to_b(source: Decoder<BufReader<File>>) {
     // start: 1:40, stop: 2:12
     source.skip_duration(Duration::from_secs(100))

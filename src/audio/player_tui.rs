@@ -6,6 +6,7 @@ use super::{player::Player, Track};
 
 pub struct PlayerTUI {
   pub playlist: Vec<Track>,
+  playlist_idx: usize,
   playlist_state: TableState,
   playlist_scroll_state: ScrollbarState,
   pub player: Player,
@@ -19,6 +20,7 @@ impl PlayerTUI {
       playlist_scroll_state: ScrollbarState::new(tracks.len() - 1),
       exit: false,
       playlist: tracks,
+      playlist_idx: 0,
       player: Player::init()
     }
   }
@@ -53,6 +55,7 @@ impl PlayerTUI {
 
     self.playlist_state.select(Some(i));
     self.playlist_scroll_state = self.playlist_scroll_state.position(i);
+    self.playlist_idx = i;
   }
 
   pub fn up(&mut self) {
@@ -69,6 +72,11 @@ impl PlayerTUI {
 
     self.playlist_state.select(Some(i));
     self.playlist_scroll_state = self.playlist_scroll_state.position(i);
+    self.playlist_idx = i;
+  }
+
+  pub fn next(&self) {
+    self.player.next();
   }
 
   fn handle_events(&mut self) -> Result<()> {
@@ -87,6 +95,7 @@ impl PlayerTUI {
       KeyCode::Up => self.up(),
       KeyCode::Down => self.down(),
       KeyCode::Enter => self.play(),
+      KeyCode::Right => self.next(),
       KeyCode::Char('q') | KeyCode::Char('Q') => self.exit(),
       _ => {}
     }
@@ -104,7 +113,7 @@ impl PlayerTUI {
   }*/
 
   pub fn play(&mut self) {
-    self.player.set_queue(&self.playlist, 0);
+    self.player.set_queue(&self.playlist, self.playlist_idx);
     self.player.play();
   }
 
