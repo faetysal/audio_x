@@ -10,6 +10,7 @@ use id3::{Tag, TagLike};
 
 pub mod player_tui;
 pub mod player;
+mod custom_source;
 
 #[derive(Debug)]
 pub struct Track {

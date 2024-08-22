@@ -2,7 +2,7 @@ use std::{fs::File, io::BufReader, time::Duration};
 use rodio::{Decoder, OutputStream, OutputStreamHandle, Sink, Source};
 use crate::tui;
 
-use super::{player_tui, Track};
+use super::{custom_source::{self, CustomSource}, player_tui, Track};
 
 pub struct Player {
   _stream: OutputStream,
@@ -37,7 +37,10 @@ impl<'a> Player {
       let track = playlist.get(idx).unwrap();
       let file = File::open(track.path.clone()).expect("File not found");
       let source = Decoder::new(BufReader::new(file)).unwrap();
-      self.sink.append(source);
+      let custom_source = CustomSource::wrap(source, || {
+        print!("Source completed");
+      });
+      self.sink.append(custom_source);
     }
   }
 
