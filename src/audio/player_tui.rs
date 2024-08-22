@@ -41,44 +41,6 @@ impl PlayerTUI {
     frame.render_widget(self, frame.area());
   }
 
-  pub fn down(&mut self) {
-    let i = match self.playlist_state.selected() {
-      Some(i) => {
-        if i >= self.playlist.len() - 1 {
-          0
-        } else {
-          i + 1
-        }
-      },
-      None => 0
-    };
-
-    self.playlist_state.select(Some(i));
-    self.playlist_scroll_state = self.playlist_scroll_state.position(i);
-    self.playlist_idx = i;
-  }
-
-  pub fn up(&mut self) {
-    let i = match self.playlist_state.selected() {
-      Some(i) => {
-        if i == 0 {
-          self.playlist.len() - 1
-        } else {
-          i - 1
-        }
-      },
-      None => 0
-    };
-
-    self.playlist_state.select(Some(i));
-    self.playlist_scroll_state = self.playlist_scroll_state.position(i);
-    self.playlist_idx = i;
-  }
-
-  pub fn next(&self) {
-    self.player.next();
-  }
-
   fn handle_events(&mut self) -> Result<()> {
     match event::read()? {
       Event::Key(key_event) if key_event.kind == KeyEventKind::Press => {
@@ -95,26 +57,58 @@ impl PlayerTUI {
       KeyCode::Up => self.up(),
       KeyCode::Down => self.down(),
       KeyCode::Enter => self.play(),
-      KeyCode::Right => self.next(),
+      // KeyCode::Right => self.next(),
+      KeyCode::Char(' ') => self.toggle_play(),
       KeyCode::Char('q') | KeyCode::Char('Q') => self.exit(),
       _ => {}
     }
   }
 
-  /*fn set_queue(&'a mut self, start_idx: usize) {
-    let playlist_count = self.playlist.len();
-    for i in 0..self.playlist.len() {
-      let idx = (playlist_count + i + start_idx) % playlist_count;
-      let track = self.playlist.get(idx).unwrap();
-      self.queue.push(track);
-    }
+  fn down(&mut self) {
+    let i = match self.playlist_state.selected() {
+      Some(i) => {
+        if i >= self.playlist.len() - 1 {
+          0
+        } else {
+          i + 1
+        }
+      },
+      None => 0
+    };
 
-    println!("Queue set");
-  }*/
+    self.playlist_state.select(Some(i));
+    self.playlist_scroll_state = self.playlist_scroll_state.position(i);
+    self.playlist_idx = i;
+  }
 
-  pub fn play(&mut self) {
+  fn up(&mut self) {
+    let i = match self.playlist_state.selected() {
+      Some(i) => {
+        if i == 0 {
+          self.playlist.len() - 1
+        } else {
+          i - 1
+        }
+      },
+      None => 0
+    };
+
+    self.playlist_state.select(Some(i));
+    self.playlist_scroll_state = self.playlist_scroll_state.position(i);
+    self.playlist_idx = i;
+  }
+
+  fn _next(&self) {
+    self.player.next();
+  }
+
+  fn play(&mut self) {
     self.player.set_queue(&self.playlist, self.playlist_idx);
     self.player.play();
+  }
+
+  fn toggle_play(&self) {
+    self.player.toggle_play();
   }
 
   fn exit(&mut self) {
@@ -273,15 +267,15 @@ impl Widget for &PlayerTUI {
       "Keyboard Controls\n\n",
       "[↑] Move Up\n\n",
       "[↓] Move Down\n\n",
-      "[←] Previous Track\n\n",
-      "[→] Next Track\n\n",
+      /*"[←] Previous Track\n\n",
+      "[→] Next Track\n\n",*/
       "[Enter] Select Track\n\n",
       "[Space] Play/Pause\n\n",
-      "[Ctrl ↑] Volume Up\n\n",
+      /*"[Ctrl ↑] Volume Up\n\n",
       "[Ctrl ↓] Volume Down\n\n",
       "[Ctrl -] Slower\n\n",
       "[Ctrl +] Faster\n\n",
-      "[M] Mute\n\n",
+      "[M] Mute\n\n",*/
       "[Q] Quit\n\n"
     ])
     .style(

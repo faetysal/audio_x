@@ -45,6 +45,14 @@ impl<'a> Player {
     self.sink.play();
   }
 
+  pub fn toggle_play(&self) {
+    if self.sink.is_paused() {
+      self.sink.play();
+    } else {
+      self.sink.pause();
+    }
+  }
+
   pub fn next(&self) {
     self.sink.skip_one();
   }
