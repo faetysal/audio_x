@@ -57,7 +57,8 @@ impl PlayerTUI {
       KeyCode::Up => self.up(),
       KeyCode::Down => self.down(),
       KeyCode::Enter => self.play(),
-      // KeyCode::Right => self.next(),
+      KeyCode::Left => self.prev(),
+      KeyCode::Right => self.next(),
       KeyCode::Char(' ') => self.toggle_play(),
       KeyCode::Char('q') | KeyCode::Char('Q') => self.exit(),
       _ => {}
@@ -98,7 +99,11 @@ impl PlayerTUI {
     self.playlist_idx = i;
   }
 
-  fn _next(&self) {
+  fn prev(&self) {
+    self.player.prev();
+  }
+
+  fn next(&self) {
     self.player.next();
   }
 
@@ -267,8 +272,8 @@ impl Widget for &PlayerTUI {
       "Keyboard Controls\n\n",
       "[↑] Move Up\n\n",
       "[↓] Move Down\n\n",
-      /*"[←] Previous Track\n\n",
-      "[→] Next Track\n\n",*/
+      "[←] Previous Track\n\n",
+      "[→] Next Track\n\n",
       "[Enter] Select Track\n\n",
       "[Space] Play/Pause\n\n",
       /*"[Ctrl ↑] Volume Up\n\n",

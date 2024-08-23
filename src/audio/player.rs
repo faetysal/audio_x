@@ -1,6 +1,6 @@
 use std::{fs::File, io::BufReader, time::Duration};
 use rodio::{Decoder, OutputStream, OutputStreamHandle, Sink, Source};
-use crate::tui;
+use std::sync::{Arc, Mutex};
 
 use super::{custom_source::{self, CustomSource}, player_tui, Track};
 
@@ -8,7 +8,8 @@ pub struct Player {
   _stream: OutputStream,
   stream_handle: OutputStreamHandle,
   sink: Sink,
-  queue: Vec<Decoder<BufReader<File>>>
+  queue: Vec<Track>,
+  queue_idx: Arc<Mutex<usize>>
 }
 
 impl<'a> Player {
@@ -20,7 +21,8 @@ impl<'a> Player {
       _stream,
       stream_handle,
       sink,
-      queue: vec![]
+      queue: vec![],
+      queue_idx: Arc::new(Mutex::new(0))
     };
 
     player.sink = Sink::try_new(&player.stream_handle).unwrap();
@@ -37,8 +39,28 @@ impl<'a> Player {
       let track = playlist.get(idx).unwrap();
       let file = File::open(track.path.clone()).expect("File not found");
       let source = Decoder::new(BufReader::new(file)).unwrap();
-      let custom_source = CustomSource::wrap(source, || {
-        print!("Source completed");
+      let q_idx = Arc::clone(&self.queue_idx);
+      let custom_source = CustomSource::wrap(source, move || {
+        let mut idx = q_idx.lock().unwrap();
+        *idx += 1;
+      });
+      self.sink.append(custom_source);
+      let track_cloned: Track = track.clone();
+      self.queue.push(track_cloned);
+    }
+  }
+  
+  fn reset_queue(&self) {
+    self.sink.clear();
+    let start = self.queue_idx.lock().unwrap();
+    for i in *start..self.queue.len() {
+      let track = self.queue.get(i).unwrap();
+      let file = File::open(track.path.clone()).expect("File not found");
+      let source = Decoder::new(BufReader::new(file)).unwrap();
+      let q_idx = Arc::clone(&self.queue_idx);
+      let custom_source = CustomSource::wrap(source, move || {
+        let mut idx = q_idx.lock().unwrap();
+        *idx += 1;
       });
       self.sink.append(custom_source);
     }
@@ -57,7 +79,16 @@ impl<'a> Player {
   }
 
   pub fn next(&self) {
+    *self.queue_idx.lock().unwrap() += 1;
+    // println!("qidx(+): {}", *self.queue_idx.lock().unwrap());
     self.sink.skip_one();
+  }
+  
+  pub fn prev(&self) {
+    *self.queue_idx.lock().unwrap() -= 1;
+    self.reset_queue();
+    // println!("qidx(-): {}", *self.queue_idx.lock().unwrap());
+    self.sink.play();
   }
 
   fn a_to_b(source: Decoder<BufReader<File>>) {

@@ -12,7 +12,7 @@ pub mod player_tui;
 pub mod player;
 mod custom_source;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Track {
   title: String,
   artist: String,
