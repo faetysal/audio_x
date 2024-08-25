@@ -1,4 +1,4 @@
-use std::io::Result;
+use std::{fs::File, io::{Result, Write}};
 use ratatui::{buffer::Buffer, crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind}, layout::{Alignment, Constraint, Direction, Layout, Rect}, style::{Color, Style, Stylize}, text::{Line, Span, Text}, widgets::{block::Title, Block, Borders, Cell, Gauge, List, Padding, Paragraph, Row, ScrollbarState, StatefulWidget, Table, TableState, Widget}, Frame};
 use crate::tui;
 
@@ -164,7 +164,21 @@ impl Widget for &PlayerTUI {
       .padding(Padding::proportional(1));
 
     let rows = self.playlist.iter().map(|track| {
-      let t = [&track.title, &track.artist, &track.album];
+      let mut artist = "-";
+      if let Some(a) = &track.artist {
+        artist = a;
+      }
+
+      let mut album = "-";
+      if let Some(al) = &track.artist {
+        album = al;
+      }
+
+      let t = [
+        &track.title, 
+        artist, 
+        album
+      ];
       t.into_iter().map(|content| Cell::from(Text::from(format!("{content}")))).collect::<Row>()
     });
   
@@ -212,7 +226,11 @@ impl Widget for &PlayerTUI {
     Paragraph::new(Text::from(""))
       .block(now_playing_block)
       .render(now_playing_layout[0], buf);
-    Paragraph::new(Text::from("Track Title"))
+    let mut track_title = "-";
+    if let Some(track) = self.player.now_playing() {
+      track_title = &track.title;
+    }
+    Paragraph::new(Text::from(track_title))
       .bg(Color::from_u32(0xFF091d26))
       .fg(Color::from_u32(0xFF00bebe))
       .bold()

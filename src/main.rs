@@ -1,10 +1,10 @@
-use std::path::Path;
+use std::{path::Path, thread, time::Duration};
 use clap::Parser;
 
 mod audio;
 mod tui;
 
-use audio::player_tui::PlayerTUI;
+use audio::{player::Player, player_tui::PlayerTUI};
 
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
@@ -28,6 +28,19 @@ fn main() -> std::io::Result<()> {
 
   app_result
 
-  /*player_tui.play();
+  /* CLI Only */
+  /*let handle = thread::spawn(move || {
+    let mut player = Player::init();
+    player.set_queue(&tracks, 0);
+    // player.play();
+  
+    let track = player.now_playing().unwrap();
+    println!("Title: {}", track.get_title());
+
+    thread::sleep(Duration::from_secs(15));
+  });
+
+  handle.join().unwrap();
+
   Ok(())*/
 }

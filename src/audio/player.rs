@@ -9,7 +9,8 @@ pub struct Player {
   stream_handle: OutputStreamHandle,
   sink: Sink,
   queue: Vec<Track>,
-  queue_idx: Arc<Mutex<usize>>
+  queue_idx: Arc<Mutex<usize>>,
+  now_playing: Option<Track>
 }
 
 impl<'a> Player {
@@ -22,7 +23,8 @@ impl<'a> Player {
       stream_handle,
       sink,
       queue: vec![],
-      queue_idx: Arc::new(Mutex::new(0))
+      queue_idx: Arc::new(Mutex::new(0)),
+      now_playing: None
     };
 
     player.sink = Sink::try_new(&player.stream_handle).unwrap();
@@ -32,6 +34,8 @@ impl<'a> Player {
   
   pub fn set_queue(&'a mut self, playlist: &'a Vec<Track>, start_idx: usize) {
     self.sink.clear();
+    self.queue.clear();
+    *self.queue_idx.lock().unwrap() = 0;
 
     let playlist_count = playlist.len();
     for i in 0..playlist_count {
@@ -80,15 +84,22 @@ impl<'a> Player {
 
   pub fn next(&self) {
     *self.queue_idx.lock().unwrap() += 1;
-    // println!("qidx(+): {}", *self.queue_idx.lock().unwrap());
+    println!("qidx(+): {}", *self.queue_idx.lock().unwrap());
     self.sink.skip_one();
   }
   
   pub fn prev(&self) {
     *self.queue_idx.lock().unwrap() -= 1;
     self.reset_queue();
-    // println!("qidx(-): {}", *self.queue_idx.lock().unwrap());
+    println!("qidx(-): {}", *self.queue_idx.lock().unwrap());
     self.sink.play();
+  }
+
+  pub fn now_playing(&self) -> Option<&Track> {
+    let idx = *self.queue_idx.lock().unwrap();
+    let track = self.queue.get(idx);
+    
+    track
   }
 
   fn a_to_b(source: Decoder<BufReader<File>>) {

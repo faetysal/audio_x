@@ -15,23 +15,34 @@ mod custom_source;
 #[derive(Debug, Clone)]
 pub struct Track {
   title: String,
-  artist: String,
-  album: String,
+  artist: Option<String>,
+  album: Option<String>,
   path: PathBuf
 }
 
 impl Track {
-  fn from_tag(tag: Tag) -> Self {
+  fn from_path(path: &PathBuf) -> Self {
+    let tag = Tag::read_from_path(path).unwrap();
     Self { 
-      title: String::from(tag.title().unwrap_or("-")), 
-      artist: String::from(tag.artist().unwrap_or("-")), 
-      album: String::from(tag.album().unwrap_or("-")), 
-      path: PathBuf::new() 
+      title: Self::get_title(tag.title(), path), 
+      artist: tag.artist().map(String::from), 
+      album: tag.album().map(String::from), 
+      path: path.clone()
     }
   }
+
+  pub fn get_title(title_opt: Option<&str>, path: &PathBuf) -> String {
+    title_opt
+      .map(String::from)
+      .unwrap_or_else(|| {
+        let path_str = path.to_str().unwrap();
+        let paths: Vec<&str> = path_str.split("/").collect();
+        let title = paths.last().unwrap();
+
+        title.to_string()
+      })
+  }
 }
-
-
 
 fn get_file_paths(dir: &Path) -> Result<Vec<PathBuf>, Box<dyn Error>> {
   let mut paths = Vec::new();
@@ -72,10 +83,7 @@ pub fn get_tracks(dir: &Path) -> Result<Vec<Track>, Box<dyn Error>> {
   let tracks = audio_paths
     .iter()
     .map(|path| {
-      let tag = Tag::read_from_path(path).unwrap();
-      let mut track = Track::from_tag(tag);
-      track.path = path.clone();
-      track
+      Track::from_path(path)
     })
     .collect();
     
