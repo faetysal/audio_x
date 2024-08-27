@@ -84,14 +84,14 @@ impl<'a> Player {
 
   pub fn next(&self) {
     *self.queue_idx.lock().unwrap() += 1;
-    println!("qidx(+): {}", *self.queue_idx.lock().unwrap());
+    // println!("qidx(+): {}", *self.queue_idx.lock().unwrap());
     self.sink.skip_one();
   }
   
   pub fn prev(&self) {
     *self.queue_idx.lock().unwrap() -= 1;
     self.reset_queue();
-    println!("qidx(-): {}", *self.queue_idx.lock().unwrap());
+    // println!("qidx(-): {}", *self.queue_idx.lock().unwrap());
     self.sink.play();
   }
 

@@ -227,15 +227,21 @@ impl Widget for &PlayerTUI {
       .block(now_playing_block)
       .render(now_playing_layout[0], buf);
     let mut track_title = "-";
+    let mut track_artist = "-";
     if let Some(track) = self.player.now_playing() {
       track_title = &track.title;
+      if let Some(artist) = &track.artist {
+        track_artist = artist;
+      } else {
+        track_artist = "Unknown Artist";
+      }
     }
     Paragraph::new(Text::from(track_title))
       .bg(Color::from_u32(0xFF091d26))
       .fg(Color::from_u32(0xFF00bebe))
       .bold()
       .render(now_playing_layout[1], buf);
-    Paragraph::new(Text::from("Artist Name"))
+    Paragraph::new(Text::from(track_artist))
       .bg(Color::from_u32(0xFF091d26))
       .fg(Color::from_u32(0xFFaaaaaa))
       .render(now_playing_layout[2], buf);
