@@ -1,4 +1,4 @@
-use std::{fs::File, io::{Result, Write}};
+use std::{fs::File, io::{Result, Write}, time::Duration};
 use ratatui::{buffer::Buffer, crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind}, layout::{Alignment, Constraint, Direction, Layout, Rect}, style::{Color, Style, Stylize}, text::{Line, Span, Text}, widgets::{block::Title, Block, Borders, Cell, Gauge, List, Padding, Paragraph, Row, ScrollbarState, StatefulWidget, Table, TableState, Widget}, Frame};
 use crate::tui;
 
@@ -42,13 +42,15 @@ impl PlayerTUI {
   }
 
   fn handle_events(&mut self) -> Result<()> {
-    match event::read()? {
-      Event::Key(key_event) if key_event.kind == KeyEventKind::Press => {
-        self.handle_key_event(key_event)
-      },
-      _ => {}
-    };
-
+    if event::poll(Duration::from_millis(250))? {
+      match event::read()? {
+        Event::Key(key_event) if key_event.kind == KeyEventKind::Press => {
+          self.handle_key_event(key_event)
+        },
+        _ => {}
+      };
+  
+    }
     Ok(())
   }
 
