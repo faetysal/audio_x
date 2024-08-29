@@ -114,7 +114,7 @@ impl<'a> Player {
   }
 
   fn total_duration(&self) -> Duration {
-    match &self.now_playing() {
+    match self.now_playing() {
       Some(track) => track.duration,
       None => Duration::ZERO
     }
@@ -124,7 +124,25 @@ impl<'a> Player {
     self.sink.get_pos()
   }
 
+  pub fn current_duration_percentage(&self) -> u16 {
+    match &self.now_playing {
+      Some(track) => {
+        let curr_pos = self.sink.get_pos();
+        let total_dur = track.duration;
+
+        let result = (curr_pos.as_secs_f32() / total_dur.as_secs_f32()) * 100f32;
+
+        result as u16
+      },
+      None => 0
+    }
+  }
+
   pub fn print_duration(&self, current_dur: Duration) -> String {
+    if self.now_playing.is_none() { 
+      return format!("--:-- / --:--");
+    }
+
     let tot_duration = self.total_duration();
     let tot_duration_secs = tot_duration.as_secs() % 60;
     let tot_duration_min = (tot_duration.as_secs() - tot_duration_secs) / 60;

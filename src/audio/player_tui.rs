@@ -257,6 +257,7 @@ impl Widget for &PlayerTUI {
 
     let curr_duration = self.player.current_duration();
     let duration_str = self.player.print_duration(curr_duration);
+    let curr_dur_percent = self.player.current_duration_percentage();
     Gauge::default()
     .gauge_style(
       Style::default()
@@ -265,7 +266,7 @@ impl Widget for &PlayerTUI {
       // .bold()
       // .italic()
     )
-    .percent(20)
+    .percent(curr_dur_percent)
     .label(duration_str)
     .render(now_playing_layout[4], buf);
 
