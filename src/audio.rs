@@ -6,7 +6,8 @@ use std::{
   path::Path
 };
 
-use id3::{Tag, TagLike};
+use lofty::prelude::*;
+use lofty::probe::Probe;
 
 pub mod player_tui;
 pub mod player;
@@ -15,19 +16,30 @@ mod custom_source;
 #[derive(Debug, Clone)]
 pub struct Track {
   title: String,
-  artist: Option<String>,
-  album: Option<String>,
-  path: PathBuf
+  pub artist: Option<String>,
+  pub album: Option<String>,
+  path: PathBuf,
+  duration: Duration
 }
 
 impl Track {
   fn from_path(path: &PathBuf) -> Self {
-    let tag = Tag::read_from_path(path).unwrap();
+    let file = Probe::open(path)
+      .expect("Invalid path")
+      .read()
+      .expect("Failed to read file");
+
+    let tag = match file.primary_tag() {
+      Some(tag) => tag,
+      None => file.first_tag().expect("No tags found")
+    };
+
     Self { 
-      title: Self::get_title(tag.title(), path), 
+      title: Self::get_title(tag.title().as_deref(), path),
       artist: tag.artist().map(String::from), 
       album: tag.album().map(String::from), 
-      path: path.clone()
+      path: path.clone(),
+      duration: file.properties().duration()
     }
   }
 

@@ -172,7 +172,7 @@ impl Widget for &PlayerTUI {
       }
 
       let mut album = "-";
-      if let Some(al) = &track.artist {
+      if let Some(al) = &track.album {
         album = al;
       }
 
@@ -250,7 +250,7 @@ impl Widget for &PlayerTUI {
     Paragraph::new("")
       .bg(Color::from_u32(0xFF091d26))
       .render(now_playing_layout[3], buf);
-    
+
     Gauge::default()
     .gauge_style(
       Style::default()
@@ -260,7 +260,7 @@ impl Widget for &PlayerTUI {
       // .italic()
     )
     .percent(20)
-    .label("0:00 / 2:30")
+    .label("--:-- / --:--")
     .render(now_playing_layout[4], buf);
 
     let player_state_layout = Layout::horizontal([

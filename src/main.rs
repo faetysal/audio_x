@@ -35,7 +35,6 @@ fn main() -> std::io::Result<()> {
     // player.play();
   
     let track = player.now_playing().unwrap();
-    println!("Title: {}", track.get_title());
 
     thread::sleep(Duration::from_secs(15));
   });
