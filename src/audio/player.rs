@@ -70,7 +70,8 @@ impl<'a> Player {
     }
   }
 
-  pub fn play(&self) {
+  pub fn play(&mut self) {
+    self.set_now_playing();
     self.sink.play();
   }
 
@@ -95,11 +96,42 @@ impl<'a> Player {
     self.sink.play();
   }
 
-  pub fn now_playing(&self) -> Option<&Track> {
+  fn set_now_playing(&mut self) {
     let idx = *self.queue_idx.lock().unwrap();
     let track = self.queue.get(idx);
-    
-    track
+    self.now_playing = track.cloned();
+  }
+
+  pub fn now_playing(&self) -> Option<&Track> {
+    self.now_playing.as_ref()
+  }
+
+  fn total_duration(&self) -> Duration {
+    match &self.now_playing {
+      Some(track) => track.duration,
+      None => Duration::ZERO
+    }
+  }
+
+  pub fn current_duration(&self) -> Duration {
+    self.sink.get_pos()
+  }
+
+  pub fn print_duration(&self, current_dur: Duration) -> String {
+    let tot_duration = self.total_duration();
+    let tot_duration_secs = tot_duration.as_secs() % 60;
+    let tot_duration_min = (tot_duration.as_secs() - tot_duration_secs) / 60;
+
+    let cur_duration_secs = current_dur.as_secs() % 60;
+    let cur_duration_min = (current_dur.as_secs() - cur_duration_secs) / 60;
+
+    format!(
+      "{:02}:{:02} / {:02}:{:02}", 
+      cur_duration_min,
+      cur_duration_secs,
+      tot_duration_min,
+      tot_duration_secs
+    )
   }
 
   fn a_to_b(source: Decoder<BufReader<File>>) {

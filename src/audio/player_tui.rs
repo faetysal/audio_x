@@ -251,6 +251,8 @@ impl Widget for &PlayerTUI {
       .bg(Color::from_u32(0xFF091d26))
       .render(now_playing_layout[3], buf);
 
+    let curr_duration = self.player.current_duration();
+    let duration_str = self.player.print_duration(curr_duration);
     Gauge::default()
     .gauge_style(
       Style::default()
@@ -260,7 +262,7 @@ impl Widget for &PlayerTUI {
       // .italic()
     )
     .percent(20)
-    .label("--:-- / --:--")
+    .label(duration_str)
     .render(now_playing_layout[4], buf);
 
     let player_state_layout = Layout::horizontal([
