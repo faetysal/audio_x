@@ -1,6 +1,6 @@
-use std::{fs::File, io::BufReader, time::Duration};
+use std::{fs::File, io::{BufReader, Write}, time::Duration};
 use rodio::{Decoder, OutputStream, OutputStreamHandle, Sink, Source};
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Mutex, mpsc::{self, Sender, Receiver}};
 
 use super::{custom_source::{self, CustomSource}, player_tui, Track};
 
@@ -10,7 +10,8 @@ pub struct Player {
   sink: Sink,
   queue: Vec<Track>,
   queue_idx: Arc<Mutex<usize>>,
-  now_playing: Option<Track>
+  now_playing: Option<Track>,
+  pub dispatcher: (Sender<usize>, Receiver<usize>)
 }
 
 impl<'a> Player {
@@ -24,7 +25,8 @@ impl<'a> Player {
       sink,
       queue: vec![],
       queue_idx: Arc::new(Mutex::new(0)),
-      now_playing: None
+      now_playing: None,
+      dispatcher: mpsc::channel()
     };
 
     player.sink = Sink::try_new(&player.stream_handle).unwrap();
@@ -43,10 +45,12 @@ impl<'a> Player {
       let track = playlist.get(idx).unwrap();
       let file = File::open(track.path.clone()).expect("File not found");
       let source = Decoder::new(BufReader::new(file)).unwrap();
+      let tx_clone = self.dispatcher.0.clone();
       let q_idx = Arc::clone(&self.queue_idx);
       let custom_source = CustomSource::wrap(source, move || {
         let mut idx = q_idx.lock().unwrap();
         *idx += 1;
+        tx_clone.send(*idx).unwrap();
       });
       self.sink.append(custom_source);
       let track_cloned: Track = track.clone();
@@ -83,31 +87,34 @@ impl<'a> Player {
     }
   }
 
-  pub fn next(&self) {
+  pub fn next(&mut self) {
     *self.queue_idx.lock().unwrap() += 1;
+    self.set_now_playing();
     // println!("qidx(+): {}", *self.queue_idx.lock().unwrap());
     self.sink.skip_one();
   }
   
-  pub fn prev(&self) {
+  pub fn prev(&mut self) {
     *self.queue_idx.lock().unwrap() -= 1;
     self.reset_queue();
+    self.set_now_playing();
     // println!("qidx(-): {}", *self.queue_idx.lock().unwrap());
     self.sink.play();
   }
 
-  fn set_now_playing(&mut self) {
+  pub fn set_now_playing(&mut self) {
     let idx = *self.queue_idx.lock().unwrap();
     let track = self.queue.get(idx);
+    self.now_playing().take();
     self.now_playing = track.cloned();
   }
-
+  
   pub fn now_playing(&self) -> Option<&Track> {
     self.now_playing.as_ref()
   }
 
   fn total_duration(&self) -> Duration {
-    match &self.now_playing {
+    match &self.now_playing() {
       Some(track) => track.duration,
       None => Duration::ZERO
     }

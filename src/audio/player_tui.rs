@@ -49,7 +49,11 @@ impl PlayerTUI {
         },
         _ => {}
       };
-  
+    }
+    
+    match self.player.dispatcher.1.try_recv() {
+      Ok(_) => self.player.set_now_playing(),
+      Err(_) => ()
     }
     Ok(())
   }
@@ -101,11 +105,11 @@ impl PlayerTUI {
     self.playlist_idx = i;
   }
 
-  fn prev(&self) {
+  fn prev(&mut self) {
     self.player.prev();
   }
 
-  fn next(&self) {
+  fn next(&mut self) {
     self.player.next();
   }
 
