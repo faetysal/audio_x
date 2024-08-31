@@ -65,10 +65,12 @@ impl<'a> Player {
       let track = self.queue.get(i).unwrap();
       let file = File::open(track.path.clone()).expect("File not found");
       let source = Decoder::new(BufReader::new(file)).unwrap();
+      let tx_clone = self.dispatcher.0.clone();
       let q_idx = Arc::clone(&self.queue_idx);
       let custom_source = CustomSource::wrap(source, move || {
         let mut idx = q_idx.lock().unwrap();
         *idx += 1;
+        tx_clone.send(*idx).unwrap();
       });
       self.sink.append(custom_source);
     }
@@ -88,18 +90,22 @@ impl<'a> Player {
   }
 
   pub fn next(&mut self) {
-    *self.queue_idx.lock().unwrap() += 1;
-    self.set_now_playing();
-    // println!("qidx(+): {}", *self.queue_idx.lock().unwrap());
-    self.sink.skip_one();
+    if *self.queue_idx.lock().unwrap() < (self.queue.len() - 1) {
+      *self.queue_idx.lock().unwrap() += 1;
+      self.set_now_playing();
+      // println!("qidx(+): {}", *self.queue_idx.lock().unwrap());
+      self.sink.skip_one();
+    }
   }
   
   pub fn prev(&mut self) {
-    *self.queue_idx.lock().unwrap() -= 1;
-    self.reset_queue();
-    self.set_now_playing();
-    // println!("qidx(-): {}", *self.queue_idx.lock().unwrap());
-    self.sink.play();
+    if *self.queue_idx.lock().unwrap() > 0 {
+      *self.queue_idx.lock().unwrap() -= 1;
+      self.reset_queue();
+      self.set_now_playing();
+      // println!("qidx(-): {}", *self.queue_idx.lock().unwrap());
+      self.sink.play();
+    }
   }
 
   pub fn set_now_playing(&mut self) {
