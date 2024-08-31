@@ -19,28 +19,43 @@ pub struct Track {
   pub artist: Option<String>,
   pub album: Option<String>,
   path: PathBuf,
-  duration: Duration
+  duration: Duration,
+  readable: bool
 }
 
 impl Track {
   fn from_path(path: &PathBuf) -> Self {
-    let file = Probe::open(path)
-      .expect("Invalid path")
-      .read()
-      .expect("Failed to read file");
-
-    let tag = match file.primary_tag() {
-      Some(tag) => tag,
-      None => file.first_tag().expect("No tags found")
+    let broken_track = Self {
+      title: Self::get_title(None, path),
+      artist: None,
+      album: None,
+      path: path.clone(),
+      duration: Duration::ZERO,
+      readable: false
     };
 
-    Self { 
-      title: Self::get_title(tag.title().as_deref(), path),
-      artist: tag.artist().map(String::from), 
-      album: tag.album().map(String::from), 
-      path: path.clone(),
-      duration: file.properties().duration()
-    }
+    let track = match Probe::open(path)
+      .expect("Invalid path")
+      .read() {
+        Ok(file) => {
+          match file.primary_tag() {
+            Some(tag) => {
+              Self { 
+                title: Self::get_title(tag.title().as_deref(), path),
+                artist: tag.artist().map(String::from), 
+                album: tag.album().map(String::from), 
+                path: path.clone(),
+                duration: file.properties().duration(),
+                readable: true
+              }
+            },
+            None => broken_track
+          }
+        },
+        Err(_) => broken_track
+      };
+
+    track
   }
 
   pub fn get_title(title_opt: Option<&str>, path: &PathBuf) -> String {
@@ -97,6 +112,7 @@ pub fn get_tracks(dir: &Path) -> Result<Vec<Track>, Box<dyn Error>> {
     .map(|path| {
       Track::from_path(path)
     })
+    .filter_map(|t| t.readable.then_some(t))
     .collect();
     
   Ok(tracks)
