@@ -190,8 +190,8 @@ impl Widget for &PlayerTUI {
   
     let widths = [
       Constraint::Percentage(40),
-      Constraint::Ratio(1, 3),
-      Constraint::Max(8)
+      Constraint::Min(1),
+      Constraint::Percentage(40)
     ];
 
     let table = Table::new(rows, widths)
@@ -199,7 +199,11 @@ impl Widget for &PlayerTUI {
       // .fg(Color::from_u32(0xFF124d54))
       .header(
         Row::new(vec!["Title", "Artist", "Album"])
-          .style(Style::new().bold())
+          .style(
+            Style::new()
+              .bold()
+              .bg(Color::from_u32(0xFF061218))
+          )
           // .bottom_margin(1)
       )
       .highlight_style(Style::new().reversed())
@@ -276,19 +280,20 @@ impl Widget for &PlayerTUI {
     ]).split(now_playing_layout[5]);
 
     let lines = vec![
-      Line::from(vec![
+      /*Line::from(vec![
         Span::from("Shuffle: "),
         Span::styled("On", Style::new().bold().fg(Color::from_u32(0xFF48CBC5))),
         Span::from(" | "),
         Span::from("Repeat: "),
         Span::styled("Off", Style::default()),
-      ])
+      ])*/
     ];
     Paragraph::new(Text::from(lines))
       .bg(Color::from_u32(0xFF091d26))
       .fg(Color::DarkGray)
       .render(player_state_layout[0], buf);
-    Paragraph::new("Volume: 55%")
+    Paragraph::new("")
+    // Paragraph::new("Volume: 55%")
       .bg(Color::from_u32(0xFF091d26))
       .fg(Color::from_u32(0xFF48cbc5))
       .alignment(Alignment::Right)
